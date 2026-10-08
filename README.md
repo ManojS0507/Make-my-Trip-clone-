@@ -1,4 +1,4 @@
-# MyTrip
+# Make-my-Trip-clone- (MyTrip)
 
 MyTrip is a travel booking web application with a Next.js frontend, a Spring Boot REST API, and a MySQL database. It includes hotel and flight listings, booking and confirmation flows, cancellation/refund tracking, reviews, mock flight updates, price history, and recommendations.
 
