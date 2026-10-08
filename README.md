@@ -49,7 +49,48 @@ docker compose down
 
 To intentionally remove local database and upload data as well, use `docker compose down --volumes`. This deletes the local Compose volumes.
 
-## Production deployment with Docker Compose
+## Recommended cloud deployment: Vercel + Railway
+
+Use Vercel for the Next.js frontend and Railway for the Spring Boot API and MySQL database. Vercel does not host this Spring Boot service or its MySQL database as part of the Next.js deployment.
+
+### 1. Deploy the API and database on Railway
+
+1. Create a Railway project from this GitHub repository and add a MySQL service.
+2. Add a service for the repository, set its root directory to `/backend`, and deploy using the included `backend/Dockerfile`. Generate a public domain for the API service.
+3. Configure these backend service variables. Replace `MySQL` in Railway's variable references with the exact name of your MySQL service if it differs:
+
+   ```text
+   SPRING_DATASOURCE_URL=jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+   SPRING_DATASOURCE_USERNAME=${{MySQL.MYSQLUSER}}
+   SPRING_DATASOURCE_PASSWORD=${{MySQL.MYSQLPASSWORD}}
+   APP_JWT_SECRET=<a unique, randomly generated secret of at least 32 bytes>
+   APP_SEED_DEMO_USERS=false
+   APP_INITIAL_ADMIN_EMAIL=<your administrator email>
+   APP_INITIAL_ADMIN_PASSWORD=<a unique, strong administrator password>
+   APP_UPLOAD_DIR=/app/uploads/reviews
+   APP_CORS_ALLOWED_ORIGINS=https://<your-vercel-domain>
+   ```
+
+   Add a Railway persistent volume to the backend service mounted at `/app/uploads` so user-uploaded review photos survive redeploys. Keep the database on Railway's private network; do not expose its port publicly. Keep all credentials in Railway's Variables UI, never in source control.
+4. Deploy and note the API's public HTTPS origin, for example `https://mytrip-api.up.railway.app`. Do not add `/api` or a trailing slash to the origin.
+
+### 2. Deploy the frontend on Vercel
+
+1. Import the same GitHub repository into Vercel and set the project root directory to `frontend`. Vercel should detect Next.js automatically.
+2. Add these environment variables for Production (and Preview too, if you want preview deployments to call the API):
+
+   ```text
+   NEXT_PUBLIC_API_BASE_URL=https://<your-railway-api-domain>
+   API_INTERNAL_URL=https://<your-railway-api-domain>
+   ```
+
+   Set both to the Railway API origin, without `/api` or a trailing slash. `NEXT_PUBLIC_API_BASE_URL` is used by browser requests; `API_INTERNAL_URL` is used when Next.js renders hotel pages on the server.
+3. Deploy. Copy the assigned Vercel origin (or configure a custom domain), then set Railway's `APP_CORS_ALLOWED_ORIGINS` to that exact HTTPS origin, with no trailing slash. If it changes, update the variable and redeploy the API.
+4. Verify the frontend loads hotels and flights, register or sign in, and check that hotel pages, bookings, and review-photo uploads work.
+
+Vercel and Railway deployment require accounts on those providers. This repository includes the application configuration and steps, but does not deploy automatically or include provider credentials. Payments are still simulated and flight status data is mocked.
+
+## Self-hosted production deployment with Docker Compose
 
 The production Compose file builds the frontend and backend containers and keeps MySQL off the host-published ports. It expects a public frontend URL, a public API URL, unique credentials, and an initial administrator password.
 

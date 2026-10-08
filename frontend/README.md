@@ -33,3 +33,12 @@ The API journey tests require the backend and MySQL services to be running. See 
 ## Container
 
 The frontend `Dockerfile` is used by the root Docker Compose files. Its public API URL is configured at build time; use the production Compose setup and HTTPS URLs when deploying.
+
+## Deploy to Vercel
+
+For the complete Vercel + Railway setup, follow the deployment guide in the repository [README](../README.md). In Vercel, set the project root directory to `frontend` and configure:
+
+- `NEXT_PUBLIC_API_BASE_URL`: the Railway API's public HTTPS origin, used by browser requests.
+- `API_INTERNAL_URL`: the same API origin, used by server-rendered hotel pages.
+
+Use the API origin without `/api` or a trailing slash. Configure these variables for each Vercel environment you deploy (Production and, optionally, Preview), then redeploy after changing them.
