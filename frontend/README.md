@@ -36,9 +36,9 @@ The frontend `Dockerfile` is used by the root Docker Compose files. Its public A
 
 ## Deploy to Vercel
 
-For the complete Vercel + Railway setup, follow the deployment guide in the repository [README](../README.md). In Vercel, set the project root directory to `frontend` and configure:
+For the complete Vercel + Render + Aiven setup, follow the deployment guide in the repository [README](../README.md). In Vercel, set the project root directory to `frontend` and configure:
 
-- `NEXT_PUBLIC_API_BASE_URL`: the Railway API's public HTTPS origin, used by browser requests.
+- `NEXT_PUBLIC_API_BASE_URL`: the Render API's public HTTPS origin, used by browser requests.
 - `API_INTERNAL_URL`: the same API origin, used by server-rendered hotel pages.
 
 Use the API origin without `/api` or a trailing slash. Configure these variables for each Vercel environment you deploy (Production and, optionally, Preview), then redeploy after changing them.
