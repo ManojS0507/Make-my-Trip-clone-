@@ -1,0 +1,1498 @@
+openapi: 3.0.3
+info:
+  title: MyTrip API
+  description: API documentation for MyTrip travel booking platform
+  version: 1.0.0
+  contact:
+    name: MyTrip Support
+    email: support@mytrip.com
+servers:
+  - url: http://localhost:8080/api
+    description: Development server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+schemas:
+  User:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      email:
+        type: string
+        format: email
+      firstName:
+        type: string
+      lastName:
+        type: string
+      phone:
+        type: string
+      address:
+        type: string
+      role:
+        type: string
+        enum: [USER, ADMIN]
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+  Hotel:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      name:
+        type: string
+      description:
+        type: string
+      address:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      starRating:
+        type: integer
+        minimum: 1
+        maximum: 5
+      facilities:
+        type: array
+        items:
+          type: string
+      images:
+        type: array
+        items:
+          type: string
+          format: uri
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+  HotelRoom:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      hotelId:
+        type: integer
+        format: int64
+      roomType:
+        type: string
+      description:
+        type: string
+      pricePerNight:
+        type: number
+        format: float
+      capacity:
+        type: integer
+      amenities:
+        type: array
+        items:
+          type: string
+      images:
+        type: array
+        items:
+          type: string
+          format: uri
+      availableFrom:
+        type: string
+        format: date
+      availableTo:
+        type: string
+        format: date
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+  Flight:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      flightNumber:
+        type: string
+      airline:
+        type: string
+      departureAirport:
+        type: string
+      arrivalAirport:
+        type: string
+      departureTime:
+        type: string
+        format: date-time
+      arrivalTime:
+        type: string
+        format: date-time
+      duration:
+        type: integer
+        description: Duration in minutes
+      price:
+        type: number
+        format: float
+      totalSeats:
+        type: integer
+      availableSeats:
+        type: integer
+      status:
+        type: string
+        enum: [ON_TIME, DELAYED, BOARDING, DEPARTED, ARRIVED, CANCELLED]
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+  FlightSeat:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      flightId:
+        type: integer
+        format: int64
+      seatNumber:
+        type: string
+      seatClass:
+        type: string
+        enum: [ECONOMY, PREMIUM_ECONOMY, BUSINESS, FIRST_CLASS]
+      isAvailable:
+        type: boolean
+      price:
+        type: number
+        format: float
+      rowNumber:
+        type: integer
+      column:
+        type: string
+      isAisle:
+        type: boolean
+      isWindow:
+        type: boolean
+  Booking:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      userId:
+        type: integer
+        format: int64
+      bookingReference:
+        type: string
+      bookingType:
+        type: string
+        enum: [HOTEL, FLIGHT]
+      hotelId:
+        type: integer
+        format: int64
+      flightId:
+        type: integer
+        format: int64
+      checkInDate:
+        type: string
+        format: date
+      checkOutDate:
+        type: string
+        format: date
+      passengerCount:
+        type: integer
+      totalAmount:
+        type: number
+        format: float
+      taxes:
+        type: number
+        format: float
+      discount:
+        type: number
+        format: float
+      status:
+        type: string
+        enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED]
+      bookingDate:
+        type: string
+        format: date-time
+      cancellationDate:
+        type: string
+        format: date-time
+      refundAmount:
+        type: number
+        format: float
+      refundStatus:
+        type: string
+        enum: [NONE, PENDING, PROCESSED, COMPLETED, FAILED]
+      cancellationReason:
+        type: string
+        maxLength: 200
+  Review:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      userId:
+        type: integer
+        format: int64
+      hotelId:
+        type: integer
+        format: int64
+      flightId:
+        type: integer
+        format: int64
+      bookingId:
+        type: integer
+        format: int64
+      rating:
+        type: integer
+        minimum: 1
+        maximum: 5
+      title:
+        type: string
+        maxLength: 200
+      comment:
+        type: string
+        maxLength: 2000
+      images:
+        type: array
+        items:
+          type: string
+          format: uri
+      helpfulVotes:
+        type: integer
+        minimum: 0
+      totalVotes:
+        type: integer
+        minimum: 0
+      isFlagged:
+        type: boolean
+      moderatorNotes:
+        type: string
+        maxLength: 500
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+  Notification:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      userId:
+        type: integer
+        format: int64
+      title:
+        type: string
+      message:
+        type: string
+      type:
+        type: string
+        enum: [BOOKING_CONFIRMED, BOOKING_CANCELLED, PAYMENT_SUCCESS, PAYMENT_FAILED, FLIGHT_DELAY, FLIGHT_CANCELLED, CHECK_IN_REMINDER, PROMOTIONAL, SYSTEM_UPDATE]
+      isRead:
+        type: boolean
+      createdAt:
+        type: string
+        format: date-time
+  PriceHistory:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      hotelId:
+        type: integer
+        format: int64
+      flightId:
+        type: integer
+        format: int64
+      price:
+        type: number
+        format: float
+      effectiveDate:
+        type: string
+        format: date
+      createdAt:
+        type: string
+        format: date-time
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request (email already exists, etc.)
+  /auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+  /auth/logout:
+    post:
+      summary: Logout user
+      responses:
+        '200':
+          description: Logout successful
+  /auth/profile:
+    get:
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+  /hotels:
+    get:
+      summary: Get all hotels
+      responses:
+        '200':
+          description: List of hotels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hotel'
+    post:
+      summary: Create a new hotel
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Hotel'
+      responses:
+        '201':
+          description: Hotel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hotel'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+  /hotels/{id}:
+    get:
+      summary: Get hotel by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Hotel details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hotel'
+        '404':
+          description: Hotel not found
+    put:
+      summary: Update hotel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Hotel'
+      responses:
+        '200':
+          description: Hotel updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Hotel'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+        '404':
+          description: Hotel not found
+    delete:
+      summary: Delete hotel
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Hotel deleted successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+        '404':
+          description: Hotel not found
+  /rooms:
+    get:
+      summary: Get all hotel rooms
+      responses:
+        '200':
+          description: List of hotel rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HotelRoom'
+    post:
+      summary: Create a new hotel room
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HotelRoom'
+      responses:
+        '201':
+          description: Hotel room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HotelRoom'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+  /rooms/{id}:
+    get:
+      summary: Get hotel room by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Hotel room details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HotelRoom'
+        '404':
+          description: Hotel room not found
+    put:
+      summary: Update hotel room
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HotelRoom'
+      responses:
+        '200':
+          description: Hotel room updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HotelRoom'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+        '404':
+          description: Hotel room not found
+    delete:
+      summary: Delete hotel room
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Hotel room deleted successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+        '404':
+          description: Hotel room not found
+  /rooms/hotel/{hotelId}:
+    get:
+      summary: Get rooms by hotel ID
+      parameters:
+        - in: path
+          name: hotelId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of rooms for the hotel
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HotelRoom'
+        '404':
+          description: Hotel not found
+  /flights:
+    get:
+      summary: Get all flights
+      responses:
+        '200':
+          description: List of flights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flight'
+    post:
+      summary: Create a new flight
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Flight'
+      responses:
+        '201':
+          description: Flight created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flight'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+  /flights/{id}:
+    get:
+      summary: Get flight by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Flight details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flight'
+        '404':
+          description: Flight not found
+    put:
+      summary: Update flight
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Flight'
+      responses:
+        '200':
+          description: Flight updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flight'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+        '404':
+          description: Flight not found
+    delete:
+      summary: Delete flight
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Flight deleted successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+        '404':
+          description: Flight not found
+  /flights/{id}/seats:
+    get:
+      summary: Get seats for a flight
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of seats for the flight
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FlightSeat'
+        '404':
+          description: Flight not found
+  /flights/{id}/status:
+    get:
+      summary: Get live flight status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Flight status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flightId:
+                    type: integer
+                    format: int64
+                  status:
+                    type: string
+                    enum: [ON_TIME, DELAYED, BOARDING, DEPARTED, ARRIVED, CANCELLED]
+                  delayReason:
+                    type: string
+                    nullable: true
+                  lastUpdated:
+                    type: string
+                    format: date-time
+        '404':
+          description: Flight not found
+  /seats:
+    get:
+      summary: Get all flight seats
+      responses:
+        '200':
+          description: List of flight seats
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FlightSeat'
+    post:
+      summary: Create a new flight seat
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlightSeat'
+      responses:
+        '201':
+          description: Flight seat created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlightSeat'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+  /seats/{id}:
+    get:
+      summary: Get flight seat by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Flight seat details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlightSeat'
+        '404':
+          description: Flight seat not found
+    put:
+      summary: Update flight seat
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlightSeat'
+      responses:
+        '200':
+          description: Flight seat updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FlightSeat'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+        '404':
+          description: Flight seat not found
+    delete:
+      summary: Delete flight seat
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Flight seat deleted successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin required)
+        '404':
+          description: Flight seat not found
+  /seats/flight/{flightId}:
+    get:
+      summary: Get seats by flight ID
+      parameters:
+        - in: path
+          name: flightId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of seats for the flight
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FlightSeat'
+        '404':
+          description: Flight not found
+  /bookings:
+    get:
+      summary: Get user's bookings
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of user's bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a new booking
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: Bad request (invalid data)
+        '401':
+          description: Unauthorized
+  /bookings/{id}:
+    get:
+      summary: Get booking by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Booking not found
+  /bookings/{id}/cancel:
+    put:
+      summary: Cancel a booking
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Booking cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (user can only cancel their own bookings)
+        '404':
+          description: Booking not found
+  /bookings/{id}/refund-status:
+    get:
+      summary: Get refund status for a booking
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Refund status details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Booking not found
+  /bookings/user/{userId}:
+    get:
+      summary: Get bookings by user ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of user's bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+        '401':
+          description: Unauthorized
+  /reviews:
+    get:
+      summary: Get all reviews
+      responses:
+        '200':
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+    post:
+      summary: Create a new review
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Bad request (invalid data)
+        '401':
+          description: Unauthorized
+  /reviews/{id}:
+    get:
+      summary: Get review by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Review details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Review not found
+    put:
+      summary: Update review
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+      responses:
+        '200':
+          description: Review updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (user can only update their own reviews)
+        '404':
+          description: Review not found
+    delete:
+      summary: Delete review
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Review deleted successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (user can only delete their own reviews, admin can delete any)
+        '404':
+          description: Review not found
+  /reviews/hotel/{hotelId}:
+    get:
+      summary: Get reviews for a hotel
+      parameters:
+        - in: path
+          name: hotelId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of reviews for the hotel
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        '404':
+          description: Hotel not found
+  /reviews/flight/{flightId}:
+    get:
+      summary: Get reviews for a flight
+      parameters:
+        - in: path
+          name: flightId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of reviews for the flight
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        '404':
+          description: Flight not found
+  /reviews/{id}/flag:
+    put:
+      summary: Flag a review as inappropriate
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Review flagged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Review not found
+  /reviews/{id}/moderate:
+    put:
+      summary: Moderate a flagged review
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                moderatorNotes:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: Review moderated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: Review not found
+  /notifications:
+    get:
+      summary: Get user's notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of user's notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+        '401':
+          description: Unauthorized
+  /notifications/{id}:
+    get:
+      summary: Get notification by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Notification details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Notification not found
+  /notifications/{id}/read:
+    put:
+      summary: Mark notification as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Notification not found
+  /notifications/{id}:
+    delete:
+      summary: Delete notification
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Notification deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Notification not found
+  /price-history:
+    get:
+      summary: Get all price history records
+      responses:
+        '200':
+          description: List of price history records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceHistory'
+    post:
+      summary: Create a new price history record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceHistory'
+      responses:
+        '201':
+          description: Price history record created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceHistory'
+  /price-history/{id}:
+    get:
+      summary: Get price history by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Price history record details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceHistory'
+        '404':
+          description: Price history record not found
+  /price-history/hotel/{hotelId}:
+    get:
+      summary: Get price history for a hotel
+      parameters:
+        - in: path
+          name: hotelId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Price history for the hotel
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceHistory'
+        '404':
+          description: Hotel not found
+  /price-history/flight/{flightId}:
+    get:
+      summary: Get price history for a flight
+      parameters:
+        - in: path
+          name: flightId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Price history for the flight
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PriceHistory'
+        '404':
+          description: Flight not found
+  /admin/users:
+    get:
+      summary: Get all users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+  /admin/users/{id}:
+    get:
+      summary: Get user by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: User not found
+    put:
+      summary: Update user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: User not found
+    delete:
+      summary: Delete user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: User deleted successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (admin only)
+        '404':
+          description: User not found
