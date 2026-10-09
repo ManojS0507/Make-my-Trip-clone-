@@ -49,51 +49,59 @@ docker compose down
 
 To intentionally remove local database and upload data as well, use `docker compose down --volumes`. This deletes the local Compose volumes.
 
-## Recommended cloud deployment: Vercel + Render + Aiven
+## Recommended free-tier deployment: Vercel + OCI
 
-Use Vercel for the Next.js frontend, Render for the Spring Boot API, and Aiven for managed MySQL. Vercel does not host this Spring Boot service or its MySQL database as part of the Next.js deployment. Render does not provide the MySQL database in this setup, so create it separately on Aiven.
+Deploy the Next.js frontend to Vercel and run the Spring Boot API and MySQL together on an Oracle Cloud Infrastructure (OCI) Always Free Ampere VM using Docker Compose. Vercel does not host this project's Spring Boot service or persistent MySQL database. OCI Always Free capacity and eligibility are subject to Oracle's current terms and regional availability; idle instances may be reclaimed. See [OCI Always Free resources](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm) and [Vercel pricing](https://vercel.com/pricing) before you begin.
 
-### 1. Create the MySQL database on Aiven
+### 1. Create the OCI VM
 
-1. Create an Aiven for MySQL service and database for MyTrip.
-2. Copy the host, port, database name, username, password, and CA certificate details from Aiven's connection information. Keep the database credentials private.
-3. Restrict Aiven's allowed inbound connections to the outbound IP addresses shown for your Render service. Do not allow access from every IP address.
+1. Create an OCI account and select your home region carefully. Oracle may require a payment card for identity verification.
+2. Create an Ubuntu Ampere A1 Flex VM in the Always Free allowance (up to 2 OCPUs and 12 GB memory total). If the shape is unavailable, try again later or another availability domain in your home region; avoid selecting a paid shape.
+3. Assign a public IPv4 address. In the VCN security list or network security group, allow inbound TCP 22 only from your own IP, plus TCP 80 and 443 for web traffic. Do not open MySQL port 3306 or the backend's port 8082 to the internet.
+4. Point a domain or free dynamic-DNS hostname's A record to the VM's public IP. A hostname is needed for the recommended automatic HTTPS setup.
+5. Connect to the VM over SSH and install Docker Engine with the Compose plugin, following Docker's official Ubuntu installation instructions. Clone this repository to the VM.
 
-### 2. Deploy the API on Render
+### 2. Run the API and MySQL on OCI
 
-1. Create a Render Web Service connected to this GitHub repository. Set the root directory to `backend`, choose the Docker runtime, and use `Dockerfile` as the Dockerfile path. Render assigns the service's `PORT`; the backend is configured to use it.
-2. Add the following environment variables in the Render dashboard, substituting your Aiven connection details and your own unique credentials:
+1. In the repository on the VM, copy `deploy/production.env.example` to `deploy/production.env`. Replace every placeholder with unique values. Use strong database/admin passwords and a randomly generated JWT secret; keep this file private.
+2. Set `MYTRIP_FRONTEND_URL` to the Vercel origin you will use (for example, `https://mytrip.vercel.app`) and `MYTRIP_API_URL` to the API hostname (for example, `https://api.example.com`). Keep the template's `BACKEND_PORT=8082`.
+3. Start only MySQL and the backend; Vercel will serve the frontend:
 
-   ```text
-   SPRING_DATASOURCE_URL=jdbc:mysql://<AIVEN_HOST>:<AIVEN_PORT>/<AIVEN_DATABASE>?sslMode=REQUIRED&serverTimezone=UTC
-   SPRING_DATASOURCE_USERNAME=<AIVEN_USERNAME>
-   SPRING_DATASOURCE_PASSWORD=<AIVEN_PASSWORD>
-   APP_JWT_SECRET=<a unique, randomly generated secret of at least 32 bytes>
-   APP_SEED_DEMO_USERS=false
-   APP_INITIAL_ADMIN_EMAIL=<your administrator email>
-   APP_INITIAL_ADMIN_PASSWORD=<a unique, strong administrator password>
-   APP_UPLOAD_DIR=/app/uploads/reviews
-   APP_CORS_ALLOWED_ORIGINS=https://<your-vercel-domain>
+   ```sh
+   docker compose --env-file deploy/production.env -f docker-compose.production.yml up --build -d db backend
    ```
 
-   Use the Aiven CA certificate and its recommended certificate-verification settings if required by your service configuration. Add a Render persistent disk mounted at `/app/uploads` so uploaded review photos survive deploys; persistent disks require an eligible paid Render service. Keep credentials in provider dashboards, never in source control.
-3. Deploy and note the API's public HTTPS origin, for example `https://mytrip-api.onrender.com`. Do not add `/api` or a trailing slash to the origin.
+   The MySQL database remains on Docker's private network. Uploaded review photos are stored in the persistent `uploads_data` Docker volume. Back up both the database and uploaded files regularly.
+4. Install Caddy on the VM and configure a site for your API hostname to reverse-proxy to `127.0.0.1:8082`. For example, for the hostname `api.example.com`, the Caddyfile site can be:
+
+   ```text
+   api.example.com {
+       reverse_proxy 127.0.0.1:8082
+   }
+   ```
+
+   Caddy can obtain and renew HTTPS certificates automatically when DNS points to the VM and ports 80/443 are reachable. Also enable the VM's operating-system firewall for SSH, HTTP, and HTTPS only. The OCI network rules must block public access to port 8082 even though Docker publishes it on the VM.
+5. Check the services and logs:
+
+   ```sh
+   docker compose --env-file deploy/production.env -f docker-compose.production.yml ps
+   docker compose --env-file deploy/production.env -f docker-compose.production.yml logs -f backend db
+   ```
 
 ### 3. Deploy the frontend on Vercel
 
-1. Import the same GitHub repository into Vercel and set the project root directory to `frontend`. Vercel should detect Next.js automatically.
-2. Add these environment variables for Production (and Preview too, if you want preview deployments to call the API):
+1. Import the GitHub repository into Vercel and set the project root directory to `frontend`.
+2. Add these environment variables for Production (and Preview too, if desired), using the API's HTTPS origin without `/api` or a trailing slash:
 
    ```text
-   NEXT_PUBLIC_API_BASE_URL=https://<your-render-api-domain>
-   API_INTERNAL_URL=https://<your-render-api-domain>
+   NEXT_PUBLIC_API_BASE_URL=https://api.example.com
+   API_INTERNAL_URL=https://api.example.com
    ```
 
-   Set both to the Render API origin, without `/api` or a trailing slash. `NEXT_PUBLIC_API_BASE_URL` is used by browser requests; `API_INTERNAL_URL` is used when Next.js renders hotel pages on the server.
-3. Deploy. Copy the assigned Vercel origin (or configure a custom domain), then set Render's `APP_CORS_ALLOWED_ORIGINS` to that exact HTTPS origin, with no trailing slash. If it changes, update the variable and redeploy the API.
-4. Verify the frontend loads hotels and flights, register or sign in, and check that hotel pages, bookings, and review-photo uploads work.
+   `NEXT_PUBLIC_API_BASE_URL` is used by browser requests; `API_INTERNAL_URL` is used when Next.js renders hotel pages on the server.
+3. Deploy and verify that listings, registration/login, hotel detail pages, bookings, and review-photo uploads work. The `APP_CORS_ALLOWED_ORIGINS` value in `deploy/production.env` must exactly match the Vercel origin; update it and restart the backend if the Vercel domain changes.
 
-Vercel, Render, and Aiven deployment require accounts on those providers. Review their current plans and limits before deploying; this repository does not provision services or include provider credentials. Payments are still simulated and flight status data is mocked.
+OCI account setup may require card verification, free VM capacity is not guaranteed in every region, and idle-instance reclamation can affect availability. Keep an eye on OCI usage and back up application data. Payments are simulated and flight status data is mocked; this app is not ready to process real payments or receive live airline data.
 
 ## Self-hosted production deployment with Docker Compose
 
